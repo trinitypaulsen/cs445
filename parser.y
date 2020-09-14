@@ -4,6 +4,7 @@
 
 extern int yylex();
 extern int line;
+extern FILE* yyin;
 
 #define YYERROR_VERBOSE
 void yyerror(const char *msg) {
@@ -91,7 +92,15 @@ token   :   ID  { printf("Line %d Token: ID Value: %s\n", $1->lineNum, $1->token
         ;
 %%
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc == 2) {
+	FILE *myfile = fopen(argv[1], "r");
+	if (!myfile) {
+	    printf("Invalid file %s\n", argv[1]);
+	    return -1;
+	}
+	yyin = myfile;
+    }
     yyparse();
     return 0;
 }

@@ -7,27 +7,30 @@
 int line = 1;
 
 char mapCharacter(char);
+char* replaceChars(char*);
 
-int setValue(int lineNum, int tokenClass, char *sValue) {
+int setValue(int lineNum, int tokenClass, char *tokenStr) {
     yylval.tokenData = new TokenData;
     yylval.tokenData->lineNum = lineNum;
     yylval.tokenData->tokenClass = tokenClass;
+    yylval.tokenData->tokenStr = strdup(tokenStr);
     if (tokenClass == NUMBER) {
-        yylval.tokenData->nValue = atof(sValue);
+        yylval.tokenData->nValue = atof(tokenStr);
     } else if (tokenClass == TRUE || tokenClass == FALSE) {
         yylval.tokenData->nValue = (tokenClass == TRUE) ? 1 : 0;
     } else if (tokenClass == CHAR || tokenClass == UNKNOWN) {
-        yylval.tokenData->cValue = sValue[0];
+        yylval.tokenData->cValue = tokenStr[0];
     } else if (tokenClass == CHARCONST) {
-	sValue++;
-	sValue[strlen(sValue) - 1] = '\0';
-        yylval.tokenData->cValue = (strlen(sValue) == 2) ? mapCharacter(sValue[1]) : sValue[0];
+	tokenStr++;
+	tokenStr[strlen(tokenStr) - 1] = '\0';
+        yylval.tokenData->cValue = (strlen(tokenStr) == 2) ? mapCharacter(tokenStr[1]) : tokenStr[0];
     } else if (tokenClass == STRCONST) {
-	sValue++;
-	sValue[strlen(sValue) - 1] = '\0';
-	yylval.tokenData->sValue = strdup(sValue);
+	tokenStr++;
+	tokenStr[strlen(tokenStr) - 1] = '\0';
+	yylval.tokenData->tokenStr = tokenStr;
+	yylval.tokenData->sValue = replaceChars(strdup(tokenStr));
     }
-    yylval.tokenData->tokenStr = strdup(sValue);
+    yylval.tokenData->tokenStr = strdup(tokenStr);
     return tokenClass;
 }
 
@@ -36,8 +39,8 @@ char mapCharacter(char ch) {
     switch (ch) {
 	case '0': ans = '\0';
 	    break;
-	case 't': ans = '\t';
-	    break;
+//	case 't': ans = '\t';
+//	    break;
 	case 'n': ans = '\n';
 	    break;
 	case 'r': ans = '\r';
@@ -46,6 +49,20 @@ char mapCharacter(char ch) {
 	    break;
     }
     return ans;
+}
+
+char* replaceChars(char *str) {
+    int inputIdx = 0;
+    int outputIdx = 0;
+    for (inputIdx = 0; inputIdx < strlen(str); inputIdx++)  {
+	if (str[inputIdx] == '\\') {
+	    str[outputIdx++] = mapCharacter(str[++inputIdx]);
+	} else {
+	    str[outputIdx++] = str[inputIdx];
+	}
+    }
+    str[outputIdx] = '\0';
+    return str;
 }
 %}
 
@@ -77,7 +94,7 @@ char mapCharacter(char ch) {
 ".." { return setValue(line, RANGE, yytext); }
 \/\/.* ;
 '[\\]?.' { return setValue(line, CHARCONST, yytext); }
-(\")([^\\\"]|\\.)*\" { return setValue(line, STRCONST, yytext); }
+(\")(.)*\" { return setValue(line, STRCONST, yytext); }
 [a-zA-Z_][a-zA-Z_0-9]* { return setValue(line, ID, yytext); }
 ":" { return setValue(line, CLN, yytext); }
 "!=" { return setValue(line, NE, yytext); }
@@ -113,6 +130,7 @@ char mapCharacter(char ch) {
 "for" { return setValue(line, FOR, yytext); }
 "in" { return setValue(line, IN, yytext); }
 "[a-zA-Z][a-zA-Z0-9]*!" { return setValue(line, NOT, yytext); }
+    (\")([^\\\"]|\\.)*\" { return setValue(line, STRCONST, yytext); }
     \".*\" { return setValue(line, STRCONST, yytext); }
 . { printf("ERROR(%d): Invalid or misplaced input character: \".\"", line); }
 "#" { printf("ERROR(%d): Invalid or misplaced input character: \"#\"", line);
