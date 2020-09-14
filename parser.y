@@ -17,7 +17,8 @@ void yyerror(const char *msg) {
 
 %token <tokenData> ID NUMBER 
 %token <tokenData> RETURN TRUE FALSE
-%token <tokenData> ELSE IF FOR WHILE IN
+%token <tokenData> ELSE IF FOR WHILE IN THEN DO
+%token <tokenData> RANGE LOOP ELSIF FOREVER
 %token <tokenData> BOOL CHAR INT
 %token <tokenData> BREAK STATIC
 %token <tokenData> NOT AND OR EQ NE LE LT GE GT
@@ -25,7 +26,7 @@ void yyerror(const char *msg) {
 %token <tokenData> T M RAN P D MOD
 %token <tokenData> LSB RSB LCB RCB LP RP SC CMA CLN
 %token <tokenData> UNKNOWN
-%token <tokenData> STRCONST
+%token <tokenData> STRCONST CHARCONST
 
 %%
 tokenList   :   tokenList token
@@ -42,12 +43,19 @@ token   :   ID  { printf("Line %d Token: ID Value: %s\n", $1->lineNum, $1->token
         |   FOR  { printf("Line %d Token: FOR\n", $1->lineNum); }
         |   WHILE  { printf("Line %d Token: WHILE\n", $1->lineNum); }
         |   IN  { printf("Line %d Token: IN\n", $1->lineNum); }
+        |   LOOP  { printf("Line %d Token: LOOP\n", $1->lineNum); }
+        |   RANGE  { printf("Line %d Token: RANGE\n", $1->lineNum); }
+        |   ELSIF  { printf("Line %d Token: ELSIF\n", $1->lineNum); }
+        |   FOREVER  { printf("Line %d Token: FOREVER\n", $1->lineNum); }
+        |   THEN  { printf("Line %d Token: THEN\n", $1->lineNum); }
+        |   DO  { printf("Line %d Token: DO\n", $1->lineNum); }
         |   BOOL  { printf("Line %d Token: BOOL\n", $1->lineNum); }
         |   CHAR  { printf("Line %d Token: CHAR\n", $1->lineNum); }
+        |   CHARCONST  { printf("Line %d Token: CHARCONST Value: '%c'  Input: '%s'\n", $1->lineNum, $1->cValue, $1->tokenStr); }
         |   INT  { printf("Line %d Token: INT\n", $1->lineNum); }
         |   BREAK  { printf("Line %d Token: BREAK\n", $1->lineNum); }
         |   STATIC  { printf("Line %d Token: STATIC\n", $1->lineNum); }
-        |   NOT  { printf("Line %d Token: NOTEQ\n", $1->lineNum); }
+        |   NOT  { printf("Line %d Token: NOT\n", $1->lineNum); }
         |   AND  { printf("Line %d Token: AND\n", $1->lineNum); }
         |   OR  { printf("Line %d Token: OR\n", $1->lineNum); }
         |   EQ  { printf("Line %d Token: EQ\n", $1->lineNum); }
