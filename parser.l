@@ -88,9 +88,9 @@ char* encodeString(TokenData *tokenData, char *str) {
 "char" { return setValue(line, CHAR, yytext); }
 "for" { return setValue(line, FOR, yytext); }
 \/\/.* ;
-(\")([^\\\"]|\\.)*\" { return setValue(line, STRCONST, yytext); }
+(\")([^\\\"\n]|\\.)*\" { return setValue(line, STRCONST, yytext); }
 "''" { return setValue(line, EMPTYCC, yytext); }
-('\\'')|('[\\]?[^'\\]') { return setValue(line, CHARCONST, yytext); }
+('\\'')|('[\\]?[^'\\\n]') { return setValue(line, CHARCONST, yytext); }
 '\\\\' { return setValue(line, CHARCONST, yytext); }
 ('[^\\].')|('[^'\n]{3,}') { printf("WARNING(%d): character is %lu characters long and not a single character: '%s'.  The first char will be used.\n", line, strlen(yytext) - 2, yytext); return setValue(line, CHARCONST, yytext); }
 "'" { return setValue(line, UNKNOWN, yytext); }
