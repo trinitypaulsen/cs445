@@ -1,13 +1,14 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "scanType.h"
 #include "parser.tab.h"
 
 int line = 1;
 
 char mapCharacter(char);
-char* replaceChars(char*);
+char* encodeString(TokenData*, char*);
 
 int setValue(int lineNum, int tokenClass, char *tokenStr) {
     yylval.tokenData = new TokenData;
@@ -23,12 +24,12 @@ int setValue(int lineNum, int tokenClass, char *tokenStr) {
     } else if (tokenClass == CHARCONST) {
 	tokenStr++;
 	tokenStr[strlen(tokenStr) - 1] = '\0';
-        yylval.tokenData->cValue = (strlen(tokenStr) == 2) ? mapCharacter(tokenStr[1]) : tokenStr[0];
+	yylval.tokenData->cValue = (tokenStr[0] == '\\') ? mapCharacter(tokenStr[1]) : tokenStr[0];
     } else if (tokenClass == STRCONST) {
 	tokenStr++;
 	tokenStr[strlen(tokenStr) - 1] = '\0';
 	yylval.tokenData->tokenStr = tokenStr;
-	yylval.tokenData->sValue = replaceChars(strdup(tokenStr));
+	yylval.tokenData->sValue = encodeString(yylval.tokenData, strdup(tokenStr));
     }
     yylval.tokenData->tokenStr = strdup(tokenStr);
     return tokenClass;
@@ -51,17 +52,18 @@ char mapCharacter(char ch) {
     return ans;
 }
 
-char* replaceChars(char *str) {
+char* encodeString(TokenData *tokenData, char *str) {
     int inputIdx = 0;
     int outputIdx = 0;
-    for (inputIdx = 0; inputIdx < strlen(str); inputIdx++)  {
+    int length = strlen(str);
+    for (inputIdx = 0; inputIdx < length; inputIdx++)  {
 	if (str[inputIdx] == '\\') {
 	    str[outputIdx++] = mapCharacter(str[++inputIdx]);
 	} else {
 	    str[outputIdx++] = str[inputIdx];
 	}
     }
-    str[outputIdx] = '\0';
+    tokenData->nValue = outputIdx;
     return str;
 }
 %}
@@ -73,34 +75,34 @@ char* replaceChars(char *str) {
 [ \t] ;
 [0-9]+   { return setValue(line, NUMBER, yytext); }
 "int" { return setValue(line, INT, yytext); }
+"in" { return setValue(line, IN, yytext); }
 "return" { return setValue(line, RETURN, yytext); }
 "true" { return setValue(line, TRUE, yytext); }
 "false" { return setValue(line, FALSE, yytext); }
 "if" { return setValue(line, IF, yytext); }
 "else" { return setValue(line, ELSE, yytext); }
 "bool" { return setValue(line, BOOL, yytext); }
-"and" { return setValue(line, AND, yytext); }
-"or" { return setValue(line, OR, yytext); }
-"then" { return setValue(line, THEN, yytext); }
-"not" { return setValue(line, NOT, yytext); }
 "while" { return setValue(line, WHILE, yytext); }
-"do" { return setValue(line, DO, yytext); }
 "static" { return setValue(line, STATIC, yytext); }
 "break" { return setValue(line, BREAK, yytext); }
 "char" { return setValue(line, CHAR, yytext); }
-"loop" { return setValue(line, LOOP, yytext); }
-"elsif" { return setValue(line, ELSIF, yytext); }
-"forever" { return setValue(line, FOREVER, yytext); }
-".." { return setValue(line, RANGE, yytext); }
+"for" { return setValue(line, FOR, yytext); }
 \/\/.* ;
-'[\\]?.' { return setValue(line, CHARCONST, yytext); }
-(\")(.)*\" { return setValue(line, STRCONST, yytext); }
+(\")([^\\\"]|\\.)*\" { return setValue(line, STRCONST, yytext); }
+"''" { return setValue(line, EMPTYCC, yytext); }
+('\\'')|('[\\]?[^'\\]') { return setValue(line, CHARCONST, yytext); }
+'\\\\' { return setValue(line, CHARCONST, yytext); }
+('[^\\].')|('[^'\n]{3,}') { printf("WARNING(%d): character is %lu characters long and not a single character: '%s'.  The first char will be used.\n", line, strlen(yytext) - 2, yytext); return setValue(line, CHARCONST, yytext); }
+"'" { return setValue(line, UNKNOWN, yytext); }
 [a-zA-Z_][a-zA-Z_0-9]* { return setValue(line, ID, yytext); }
 ":" { return setValue(line, CLN, yytext); }
 "!=" { return setValue(line, NE, yytext); }
 "==" { return setValue(line, EQ, yytext); }
 "=" { return setValue(line, ASSIGN, yytext); }
+"!" { return setValue(line, NOT, yytext); }
+"|" { return setValue(line, OR, yytext); }
 ";" { return setValue(line, SC, yytext); }
+"&" { return setValue(line, AND, yytext); }
 "{" { return setValue(line, LCB, yytext); }
 "}" { return setValue(line, RCB, yytext); }
 "(" { return setValue(line, LP, yytext); }
@@ -127,10 +129,19 @@ char* replaceChars(char *str) {
 . { return setValue(line, UNKNOWN, yytext); }
 %%
 /*
-"for" { return setValue(line, FOR, yytext); }
-"in" { return setValue(line, IN, yytext); }
+(\")(.)*\" { return setValue(line, STRCONST, yytext); }
+'([^'\\\n]|\\.)' { return setValue(line, CHARCONST, yytext); }
+['].(.)+['] { return setValue(line, CHARCONST, yytext); }
+'[\\][a-zA-Z0-9\\] || [a-zA-Z0-9]' { return setValue(line, CHARCONST, yytext); }
+".." { return setValue(line, RANGE, yytext); }
+"or" { return setValue(line, OR, yytext); }
+"forever" { return setValue(line, FOREVER, yytext); }
+"do" { return setValue(line, DO, yytext); }
+"not" { return setValue(line, NOT, yytext); }
+"elsif" { return setValue(line, ELSIF, yytext); }
+"then" { return setValue(line, THEN, yytext); }
+"loop" { return setValue(line, LOOP, yytext); }
 "[a-zA-Z][a-zA-Z0-9]*!" { return setValue(line, NOT, yytext); }
-    (\")([^\\\"]|\\.)*\" { return setValue(line, STRCONST, yytext); }
     \".*\" { return setValue(line, STRCONST, yytext); }
 . { printf("ERROR(%d): Invalid or misplaced input character: \".\"", line); }
 "#" { printf("ERROR(%d): Invalid or misplaced input character: \"#\"", line);

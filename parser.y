@@ -10,6 +10,13 @@ extern FILE* yyin;
 void yyerror(const char *msg) {
     printf("ERROR(%d): %s", line, msg);
 }
+
+void printTokenString(TokenData *tokenData) {
+    int i;
+    for (i = 0; i < tokenData->nValue; i++) {
+	printf("%c", tokenData->sValue[i]);
+    }
+}
 %}
 
 %union {
@@ -27,7 +34,7 @@ void yyerror(const char *msg) {
 %token <tokenData> T M RAN P D MOD
 %token <tokenData> LSB RSB LCB RCB LP RP SC CMA CLN
 %token <tokenData> UNKNOWN
-%token <tokenData> STRCONST CHARCONST
+%token <tokenData> STRCONST CHARCONST EMPTYCC 
 
 %%
 tokenList   :   tokenList token
@@ -53,17 +60,18 @@ token   :   ID  { printf("Line %d Token: ID Value: %s\n", $1->lineNum, $1->token
         |   BOOL  { printf("Line %d Token: BOOL\n", $1->lineNum); }
         |   CHAR  { printf("Line %d Token: CHAR\n", $1->lineNum); }
         |   CHARCONST  { printf("Line %d Token: CHARCONST Value: '%c'  Input: '%s'\n", $1->lineNum, $1->cValue, $1->tokenStr); }
+        |   EMPTYCC  { printf("ERROR(%d): Empty character ''.  Characters ignored.\n", $1->lineNum); }
         |   INT  { printf("Line %d Token: INT\n", $1->lineNum); }
         |   BREAK  { printf("Line %d Token: BREAK\n", $1->lineNum); }
         |   STATIC  { printf("Line %d Token: STATIC\n", $1->lineNum); }
-        |   NOT  { printf("Line %d Token: NOT\n", $1->lineNum); }
-        |   AND  { printf("Line %d Token: AND\n", $1->lineNum); }
-        |   OR  { printf("Line %d Token: OR\n", $1->lineNum); }
+        |   NOT  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
+        |   AND  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
+        |   OR  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
         |   EQ  { printf("Line %d Token: EQ\n", $1->lineNum); }
-        |   NE  { printf("Line %d Token: NOTEQ\n", $1->lineNum); }
-        |   LE  { printf("Line %d Token: LESSEQ\n", $1->lineNum); }
+        |   NE  { printf("Line %d Token: NEQ\n", $1->lineNum); }
+        |   LE  { printf("Line %d Token: LEQ\n", $1->lineNum); }
         |   LT  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
-        |   GE  { printf("Line %d Token: GRTEQ\n", $1->lineNum); }
+        |   GE  { printf("Line %d Token: GEQ\n", $1->lineNum); }
         |   GT  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
         |   ASSIGN  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
         |   PE  { printf("Line %d Token: ADDASS\n", $1->lineNum); }
@@ -87,8 +95,10 @@ token   :   ID  { printf("Line %d Token: ID Value: %s\n", $1->lineNum, $1->token
         |   SC  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
         |   CMA  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
         |   CLN  { printf("Line %d Token: %s\n", $1->lineNum, $1->tokenStr); }
-        |   STRCONST  { printf("Line %d Token: STRINGCONST Value: '%s'  Input: \"%s\"\n", $1->lineNum, $1->sValue, $1->tokenStr); }
-        |   UNKNOWN  { printf("ERROR(%d): Invalid or misplaced input character: \"%c\"\n", $1->lineNum, $1->cValue); }
+        |   STRCONST  { printf("Line %d Token: STRINGCONST Value: \"", $1->lineNum);
+			printTokenString($1);
+			printf("\"  Input: \"%s\"\n", $1->tokenStr); }
+        |   UNKNOWN  { printf("ERROR(%d): Invalid or misplaced input character: \'%c\'. Character Ignored.\n", $1->lineNum, $1->cValue); }
         ;
 %%
 
