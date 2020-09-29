@@ -16,7 +16,7 @@ int setValue(int lineNum, int tokenClass, char *tokenStr) {
     yylval.tokenData->tokenClass = tokenClass;
     yylval.tokenData->tokenStr = strdup(tokenStr);
     if (tokenClass == NUMBER) {
-        yylval.tokenData->nValue = atof(tokenStr);
+        yylval.tokenData->nValue = atoi(tokenStr);
     } else if (tokenClass == TRUE || tokenClass == FALSE) {
         yylval.tokenData->nValue = (tokenClass == TRUE) ? 1 : 0;
     } else if (tokenClass == CHAR || tokenClass == UNKNOWN) {
@@ -128,21 +128,3 @@ char* encodeString(TokenData *tokenData, char *str) {
 "+" { return setValue(line, P, yytext); }
 . { return setValue(line, UNKNOWN, yytext); }
 %%
-/*
-(\")(.)*\" { return setValue(line, STRCONST, yytext); }
-'([^'\\\n]|\\.)' { return setValue(line, CHARCONST, yytext); }
-['].(.)+['] { return setValue(line, CHARCONST, yytext); }
-'[\\][a-zA-Z0-9\\] || [a-zA-Z0-9]' { return setValue(line, CHARCONST, yytext); }
-".." { return setValue(line, RANGE, yytext); }
-"or" { return setValue(line, OR, yytext); }
-"forever" { return setValue(line, FOREVER, yytext); }
-"do" { return setValue(line, DO, yytext); }
-"not" { return setValue(line, NOT, yytext); }
-"elsif" { return setValue(line, ELSIF, yytext); }
-"then" { return setValue(line, THEN, yytext); }
-"loop" { return setValue(line, LOOP, yytext); }
-"[a-zA-Z][a-zA-Z0-9]*!" { return setValue(line, NOT, yytext); }
-    \".*\" { return setValue(line, STRCONST, yytext); }
-. { printf("ERROR(%d): Invalid or misplaced input character: \".\"", line); }
-"#" { printf("ERROR(%d): Invalid or misplaced input character: \"#\"", line);
-*/

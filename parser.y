@@ -1,10 +1,14 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include "scanType.h"
 
 extern int yylex();
 extern int line;
 extern FILE* yyin;
+extern int ourGetopt(int, char**, char*);
+//extern int optind;
+//extern char *optarg;
 
 #define YYERROR_VERBOSE
 void yyerror(const char *msg) {
@@ -102,15 +106,39 @@ token   :   ID  { printf("Line %d Token: ID Value: %s\n", $1->lineNum, $1->token
         ;
 %%
 
+void printTree() {
+}
+
 int main(int argc, char **argv) {
-    if (argc == 2) {
-	FILE *myfile = fopen(argv[1], "r");
+    int pflag, errflag;
+    char c;
+    pflag = errflag = 0;
+    while ((c = ourGetopt(argc, argv, (char*) "dp")) != EOF) {
+	switch (c) {
+	    case 'd':
+		yydebug = 1;
+		break;
+	    case 'p':
+		pflag = 1;
+		break;
+	    default:
+		errflag = 1;
+		printf("invalid flag\n");
+		exit(2);
+		break;
+	}
+    }
+    if (argc >= 2) {
+	FILE *myfile = fopen(argv[argc - 1], "r");
 	if (!myfile) {
-	    printf("Invalid file %s\n", argv[1]);
+	    printf("Invalid file %s\n", argv[argc - 1]);
 	    return -1;
 	}
 	yyin = myfile;
     }
     yyparse();
+    if (pflag) {
+	printTree();
+    }
     return 0;
 }
